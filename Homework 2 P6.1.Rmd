@@ -1,0 +1,40 @@
+---
+title: "Untitled"
+author: "Kah Meng Soh"
+date: "2/6/2022"
+output: word_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r fig.height=7.5,fig.width=7.5}
+data=read.table("http://www.stat.umn.edu/~gary/book/fcdae.data/pr6.1",header=TRUE)
+attach(data)
+trt=as.factor(trt)
+m=lm(y~trt)
+par(mfrow=c(2,2))
+plot(m)
+#The data need transformation because we see that from the residual vs fitted plot it has a megaphone effect, hence the assumption of equal error variance failed, though the error follow normality as the normal Q-Q plot shows most points on the straight line.
+```
+```{r fig.height=7.5,fig.width=7.5}
+library(MASS)
+bc=boxcox(m)
+i=which.max(bc$y)
+bc$x[i]
+#The power transformation suggested by box-cox transformation is 1.878788, hence for professionalism we choose power of 2
+```
+```{r fig.height=7.5,fig.width=7.5}
+y2=y^2
+m2=lm(y2~trt)
+par(mfrow=c(2,2))
+summary(m2)
+plot(m2)
+#The megaphone effect get lessened so we will use the transform data for our analysis.
+```
+```{r fig.height=7.5,fig.width=7.5}
+anova(m2)
+#The small p-value from ANOVA F-Score reject the null hypothesis that all treatment mean are equal.
+m2=aov(y2 ~ trt)
+cis=TukeyHSD(m2, which="trt", ordered=T, conf.level=0.95)
+cis
+```

@@ -1,0 +1,68 @@
+---
+title: "Untitled"
+author: "Kah Meng Soh"
+date: "1/29/2022"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+data=read.table("http://www.stat.umn.edu/~gary/book/fcdae.data/pr3.2",header=TRUE)
+attach(data)
+trt=as.factor(trt)
+m=lm(days~trt)
+summary(m)
+#Null hypothesis = all group mean is same, reproductive activity does not affect longevity
+#Alternative hypothesis = some group mean is not same, reproductive activity does affect longevity
+#We see that the p-value of the F score is small at 0.000433 therefore we have enough evidence to reject null hypothesis and conclude that the mean is not same.
+```
+
+```{r fig.height=5, fig.width=10}
+#Display data as side by side boxplot
+None = data$days[which(data$trt==1)]
+Pregnant1= data$days[which(data$trt==2)]
+Virgin1=data$days[which(data$trt==3)]
+Pregnant8=data$days[which(data$trt==4)]
+Virgin8=data$days[which(data$trt==5)]
+boxplot(None,Pregnant1,Pregnant8,Virgin1,Virgin8,ylab="Longevity(days)",xlab="Treatment",names=c("None","1Pregnant","1Virgin","8Pregnant","8Virgin"))
+#We see that even the graphical visualization support that the mean is not same, hence reproductive activity does affect the longevity (days) of male flies
+```
+
+```{r}
+#We know and can calculate from the coefficient of the model that the estimate mean of treatment 1,2,3,4,and 5 is 63.36,63.56,64.8,56.76,and 38.72 respectively, the estimated grand mean is 57.44. Therefore the estimated treatment effect of 1 is 63.36-57.44=5.92.
+
+#For the 95% confidence interval of treatment effect 1.
+anova(m)
+#We need the mean square for error which is 219.28
+#The t value 
+qt(0.025,120,lower.tail=FALSE)
+Lowerboundery = 5.92 - 1.97993*(2.6489)
+Upperboundery = 5.92 + 1.97993*(2.6489)
+CI=c(Lowerboundery,Upperboundery)
+CI
+```
+```{r}
+#To create a 95% confidence interval on the contrast μ1−μ4, coefficient (1,0,0,-1,0)
+#Point estimate of μ1−μ4 is 63.36-56.76=6.6
+#T value with 120 df is 1.97993
+#MSE is 219.28, square root of MSE is 14.808
+#Square root of sum(weight^2/ni)=(1/25+1/25)^0.5= 0.2828
+#Standard Error of Contrast = 14.808*0.2828=4.1877
+Lowerboundery = 6.6 - 1.97993*(4.1877)
+Upperboundery = 6.6 + 1.97993*(4.1877)
+CI=c(Lowerboundery,Upperboundery)
+CI
+```
+
+```{r}
+#To study if longevity of male flies supplied with pregnant companions is different from male flies with virgin companions. Consider the contrast weight coefficient (0,0.5,-0.5,0.5,-0.5)
+#Null hypothesis: longevity is same: (μ2+μ4)/2 - (μ3+μ5)/2 = 0
+#Alternative hypothesis: longevity is not the same (μ2+μ4)/2 - (μ3+μ5)/2 != 0
+#Point estimate of (μ2+μ4)/2 - (μ3+μ5)/2 is 8.4
+#T value with 120 df is (8.4-0)/(14.808*0.2)=2.8363 
+2*pt(2.8363,120,lower.tail=FALSE)
+#The p-value is 0.005358702, therefore we have enough evidence to reject the null hypothesis that the longevity is the same for both group.
+```
+
