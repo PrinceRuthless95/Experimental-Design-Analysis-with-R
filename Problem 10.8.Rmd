@@ -1,0 +1,45 @@
+---
+title: "Untitled"
+author: "Kah Meng Soh"
+date: "2/23/2022"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library(car)
+library(MASS)
+nutrition = read.table("http://www.stat.umn.edu/~gary/book/fcdae.data/pr10.8",header=TRUE)
+nutrition$source = as.factor(nutrition$source)
+nutrition$percent = as.factor(nutrition$percent)
+m = lm(response~source*percent, data = nutrition)
+par(mfrow = c(2,2))
+plot(m)
+v = boxcox(m)
+lambda = v$x[which.max(v$y)]
+m = lm(response^lambda~source*percent, data = nutrition)
+par(mfrow = c(2,2))
+plot(m)
+Anova(m,type = 2)
+#Both main effect significant, but interaction not
+TukeyHSD(aov(m), which = 'source', ordered = T)
+#All source levels are significantly different.
+TukeyHSD(aov(m), which = 'percent', ordered = T)
+#Concentration = 2 is not significantly different from Concentration = 3
+nutrition = read.table("http://www.stat.umn.edu/~gary/book/fcdae.data/pr10.8",header=TRUE)
+nutrition$source = as.factor(nutrition$source)
+nutrition[nutrition$percent==1,]$percent = 0.09
+nutrition[nutrition$percent==2,]$percent = 0.12
+nutrition[nutrition$percent==3,]$percent = 0.15
+nutrition[nutrition$percent==4,]$percent = 0.18
+m = lm(response^lambda~source+percent+I(percent^2)+source*percent+source*I(percent^2), data = nutrition)
+par(mfrow = c(2,2))
+plot(m)
+#There are two factors for this experiment. But we only need to asses the significance of higher order terms for protein concentration. So, we will use the quantitative doses only for the protein concentration.
+Anova(m, type = 2)
+m = lm(response^lambda~source, data = nutrition)
+Anova(m, type = 2)
+#As it is evident, only source is significant but the quadratic effects of percent concentration is not significant. As we know that only source is significant, we need to refit with only significant terms.
+```

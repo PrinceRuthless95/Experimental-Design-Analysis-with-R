@@ -1,0 +1,35 @@
+---
+title: "Untitled"
+author: "Kah Meng Soh"
+date: "2/22/2022"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r fig.height=7.5,fig.width=7.5}
+data=read.table("http://www.stat.umn.edu/~gary/book/fcdae.data/pr10.3",header=TRUE)
+names(data)
+attach(data)
+gum=as.factor(gum)
+protein=as.factor(protein)
+m=lm(response~gum*protein)
+par(mfrow = c(2, 2))
+plot(m)
+#Model assumption acceptable although a little non constant variance, boxcox suggest lambda of 0.7878 which is close to 1.
+library(car)
+Anova(m)
+#The interaction effect of gum and protein and main effect of protein is insignificant, only the main effect gum is significant,
+TukeyHSD(aov(m), which = 'gum', ordered = T)
+#We can either use TukeyHSD which gives a simultaneous CI or linear contrast for all pairs. But the multiple comparison Tukey is accurate for balanced data and is only approximate for unbalanced data. But, there is a variation of Tukey HSD called Tuley-Kramer which can be used for unequal sample sizes and which is slightly more conservative than TukeyHSD. Also, it is always better to use TukeyHSD for all pairwise comparisons than any other methods.
+#The underline diagram is like this:
+#1 5 3 4 2
+#___
+#  _____
+#     
+library(emmeans)
+emmeans(m, specs = 'gum')[1]
+#95% CI:(2.58,4.18)
+emmip(m, gum~protein)
+```

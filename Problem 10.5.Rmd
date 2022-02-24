@@ -1,0 +1,36 @@
+---
+title: "Untitled"
+author: "Kah Meng Soh"
+date: "2/22/2022"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r fig.height=7.5,fig.width=7.5}
+data=read.table("http://www.stat.umn.edu/~gary/book/fcdae.data/pr10.5",header=TRUE)
+names(data)
+attach(data)
+variety=as.factor(variety)
+location=as.factor(location)
+temperature=as.factor(temperature)
+m=lm(size~variety*location*temperature)
+par(mfrow = c(2, 2))
+plot(m)
+#Megaphone effect so do box-cox transformation
+library(MASS)
+bc=boxcox(m)
+i=which.max(bc$y)
+bc$x[i]
+#Box-cox suggest reciprocal transformation
+size2=1/size
+m2=lm(size2~variety*location*temperature)
+plot(m2)
+#Megaphone effect gone so assumption met
+library(car)
+Anova(m2)
+#Only the location and temperature main effect are significant
+TukeyHSD(aov(m), which = 'temperature', ordered = T)
+#The levels of temperature are significantly different.
+```

@@ -1,0 +1,41 @@
+---
+title: "Untitled"
+author: "Kah Meng Soh"
+date: "2/22/2022"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r fig.height=7.5,fig.width=7.5}
+data=read.table("http://www.stat.umn.edu/~gary/book/fcdae.data/pr8.4",header=TRUE)
+names(data)
+attach(data)
+#The label should be clarified as follow according to question:
+#Flow 1: Low
+#Flow 2: High
+#Temp 1: 8 hrs
+#Temp 2: 13 hrs
+#Laser 1: old
+#Laser 2: new
+flow=as.factor(flow)
+temp=as.factor(temp)
+laser=as.factor(laser)
+m=lm(y~flow*temp*laser)
+par(mfrow = c(2, 2))
+plot(m)
+#Megaphone effect which mean unequal variance lets do boxcox transformation
+library(MASS)
+bc=boxcox(m)
+i=which.max(bc$y)
+bc$x[i]
+#Boxcox suggest close to power 0 transformation, which is low transformation
+y2=log(y)
+m2=lm(y2~flow*temp*laser)
+par(mfrow = c(2, 2))
+plot(m2)
+#Megaphone effect gone, and QQ plot seems acceptable.
+anova(m2)
+#We see that the highest order interaction is significant with p-value of 0.008<0.05, only flow:laser interaction is significant with p-value of 0.0115, which means we should include the flow and laser main effect, also temp is highly significant, so the final model should be flow+temp+laser+flow:laser+flow:laser:temp.
+```
