@@ -1,0 +1,37 @@
+---
+title: "Untitled"
+author: "Kah Meng Soh"
+date: "2/6/2022"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r fig.height=7.5,fig.width=7.5}
+data=read.table("http://www.stat.umn.edu/~gary/book/fcdae.data/pr13.4",header=TRUE)
+attach(data)
+names(data)
+student=as.factor(student)
+grader=as.factor(grader)
+exam=as.factor(exam)
+m=lm(score~student+grader+exam)
+par(mfrow = c(2,2))
+plot(m)
+#As we can see, there's banana shape on the residual plot indicate presence of non-linearity hence model error, we can try boxcox transformation and see how it goes.
+library(MASS)
+bc=boxcox(m)
+i=which.max(bc$y)
+bc$x[i]
+#Boxcox suggested power of 2 transformation.
+m=lm(score^2~student+grader+exam)
+plot(m)
+#Boxcox transformation improved the model greatly.
+anova(m)
+#Exam effect is significant due to low-p-value.
+library(emmeans)
+TukeyHSD(aov(m), which = 'exam', ordered = T)
+emmeans(aov(m), 'exam')
+#Underline diagram
+#14 53 2
+```

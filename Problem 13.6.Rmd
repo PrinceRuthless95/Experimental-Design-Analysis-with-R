@@ -1,0 +1,47 @@
+---
+title: "Untitled"
+author: "Kah Meng Soh"
+date: "2/6/2022"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r fig.height=7.5,fig.width=7.5}
+data=read.table("http://www.stat.umn.edu/~gary/book/fcdae.data/pr13.6",header=TRUE)
+#trt 3: no herbicide
+#trt 1: apply herbicide 2 weeks
+#trt 2: apply herbicide 4 weeks
+#location 2: St Paul
+#location 1: Rosemount
+#variety 1 to 16
+attach(data)
+names(data)
+location=as.factor(location)
+trt=as.factor(trt)
+variety=as.factor(variety)
+m=lm(biomass~location+variety+trt)
+par(mfrow = c(2,2))
+plot(m)
+#As we can see, there's banana shape on the residual plot indicate presence of non-linearity hence model error, we can try boxcox transformation and see how it goes.
+library(MASS)
+bc=boxcox(m)
+i=which.max(bc$y)
+bc$x[i]
+#Boxcox suggested power of 0.343 transformation.
+m=lm(biomass^0.3434343~location+variety+trt)
+plot(m)
+#Boxcox transformation help as the variance seems equal so we assume the model is acceptable.
+anova(m)
+#The trt effect is statistically significant due to small p-value, therefore should be include in the model. Variety is not statistically significant
+TukeyHSD(aov(m), 'trt', ordered = T)
+#As the effects of herbicide and variety are important, but variety is not significant, so we can check the differential effects of the herbicide treatment factor.
+library(emmeans)
+emmeans(aov(m), 'trt')
+#under line diagram
+#1 2 3
+#_____
+
+
+```

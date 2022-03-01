@@ -1,0 +1,37 @@
+---
+title: "Untitled"
+author: "Kah Meng Soh"
+date: "2/6/2022"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r fig.height=7.5,fig.width=7.5}
+data=read.table("http://www.stat.umn.edu/~gary/book/fcdae.data/pr14.3",header=TRUE)
+attach(data)
+names(data)
+exam=as.factor(exam)
+grader=as.factor(grader)
+m=aov(score~exam+grader)
+par(mfrow = c(2,2))
+plot(m)
+#Model assumption looks good, try to do boxcox for confirmation.
+library(MASS)
+bc=boxcox(m)
+i=which.max(bc$y)
+bc$x[i]
+#Boxcox suggest no transformation is required
+summary(m)
+library(multcomp)
+m2=glht(m,linfct=mcp(grader='Tukey'),alternative='two.sided')
+summary(m2)
+#The plot would look terrible due to high p-value in all interaction.
+#From the data we got g=25,k=5,r=6,b=30, therefore kb=rg=150, lambda = 6(4)/(25-1)=1
+y1=subset(data,data$grader==1)
+mean(y1$score)
+y2=subset(data,data$grader==1)
+mean(y2$score)
+#The confidence interval would be 64.6666-70+-qtukey(25.96)/2^0.5 *(7.2(1/5+1/5))^0.5
+```
