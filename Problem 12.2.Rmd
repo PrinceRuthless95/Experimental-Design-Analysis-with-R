@@ -1,0 +1,32 @@
+---
+title: "Untitled"
+author: "Kah Meng Soh"
+date: '2022-03-30'
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+data=read.table("http://www.stat.umn.edu/~gary/book/fcdae.data/pr12.2",header=TRUE)
+data = within(data, {alloy = as.factor(alloy)
+method = as.factor(method)
+as.factor(dentist)})
+m = lm(hardness~alloy*method*dentist, data = data)
+data.aov = anova(m)
+data.aov
+# This is mixed effect model, first need to find correct denominators for F test for each term, since residual has no df, we have to use 3-way interaction term as our surrogate error term
+f_dentist = (217576.4/4)/(558257.6/56)
+pf(f_dentist, 4, 56, lower.tail = F) #significant dentist effect
+# Denominators: A->DA, M->DM, D->E and for DM->E. Here, for E we shall use the 3-way interaction Alloy:Method:Dentist.
+f_method = (597615.2/2)/(263441/8)
+pf(f_dentist, 2, 8, lower.tail = F) #not all suppliers are equal
+f_alloy = (220338/7)/(208814.3/28)
+pf(f_dentist, 7, 28, lower.tail = F)#not all alloys are equal
+# All main effect are significant
+# Check Dentist:Method interaction as it requires close inspection
+f_dentist_method = (263441/8)/(558257.6/56)
+pf(f_dentist_method, 8, 56, lower.tail = F) #significant dentist:method interaction non zero variance
+#The 2 way interaction of Dentist and Method is significant.
+```{r}
