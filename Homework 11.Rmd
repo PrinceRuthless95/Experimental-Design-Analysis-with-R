@@ -1,0 +1,134 @@
+---
+title: "Untitled"
+author: "Kah Meng Soh"
+date: '2022-04-28'
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+#Question 1
+#Question 1a
+library(boot)
+plot(total~conc, data = nitrofen)
+nitrofen$conc = as.factor(nitrofen$conc)
+par(mfrow = c(1,3))
+plot(nitrofen$conc, nitrofen$brood1, xlab = 'Conc', ylab = 'brood1', col = 'red')
+plot(nitrofen$conc, nitrofen$brood2, xlab = 'Conc', ylab = 'brood2', col = 'blue')
+plot(nitrofen$conc, nitrofen$brood3, xlab = 'Conc', ylab = 'brood3', col = 'green')
+#Total off springs tend to decrease with inc in conc. Clearly, the trend within each brood is not the same.
+```
+```{r}
+#Question 1b
+library(reshape2)
+brood_dat = melt(nitrofen, id = c('conc', 'total'),
+variable.name = "brood", value.name = "survived")
+brood_dat$total = NULL
+id_range = rep(1:50, times = 3)
+brood_dat$id = id_range
+head(brood_dat)
+brood_dat$brood = as.factor(brood_dat$brood)
+brood_dat$conc = as.numeric(brood_dat$conc)
+library(lme4)
+m.glm = glmer(survived~conc*brood + (1|id), family = poisson, data = brood_dat)
+summary(m.glm)
+#Change in conc increases the odds of survival of off springs by exp(0.3060) for brood1 compared to brood3. Change in conc decreases the odds of survival of off springs by exp(-0.1321) for brood2 compared to brood3
+```
+```{r}
+#Question 1c
+library(geepack)
+m.gee = geeglm(survived~conc*brood, id = id, family = poisson,
+data = brood_dat, corstr = 'exchangeable', scale.fix = T)
+summary(m.gee)
+# The signs for the coefficients of the terms have not changed meaning the direction of change of response when a single covariate is changed is still preserved. Estimates have become more significant and have reduced in magnitude compared to GLMM. Also, now we have forced a within group compound correlation structure which is not prewsent in GLM.
+```
+
+```{r}
+#Question 2
+#Question 2a
+library(faraway)
+potuse_dat = melt(potuse, id = c("sex", "count"), variable.name = "year", value.name = 'cat_count')
+potuse_dat$id = rep(1:486, times = 5)
+potuse_dat$year = rep(1:5, times = c(486, 486, 486, 486, 486))
+head(potuse_dat)
+require(lattice)
+xyplot(count~year|id, data = potuse_dat[potuse$sex==1,], layout = c(50, 10),
+panel = function(x,y){
+panel.xyplot(x,y)
+panel.lines(range(x), c(0,0))
+})
+xyplot(count~year|id, data = potuse_dat[potuse$sex==2,], layout = c(50, 10),
+panel = function(x,y){
+panel.xyplot(x,y)
+panel.lines(range(x), c(0,0))
+})
+```
+```{r}
+#Question 2b
+library(MASS)
+potuse_dat$used = 0
+potuse_dat[potuse_dat$cat_count==1,]$used = 0
+potuse_dat[potuse_dat$cat_count!=1,]$used = 1
+potuse_dat$sex = as.factor(potuse_dat$sex)
+m.glmm = glmer(used~sex*year+ (1|id), family = binomial, data = potuse_dat)
+summary(m.glmm)
+#sex has significant effect. For a given year, the odds of marijuana consumption decreases by exp(-2.32e-8) ~ 1 for boys compared to girls. This means boys and girls have almost the same odds of consuming marijuana for a fixed year.
+```
+```{r}
+#Question 2c
+library(doBy)
+cm = rbind("male vs female" = c(0, 1, 0, 0))
+esticon(m.glmm, L = cm, beta0 = 0, conf.int = T, level = 0.95)
+#both are almost the same with negligible difference.
+```
+```{r}
+#Question 2d
+potuse_dat$year = as.factor(potuse_dat$year)
+m2.glmm = glmer(used~sex*year + (1|id), family = binomial, data = potuse_dat)
+summary(m2.glmm)
+anova(m.glmm, m2.glmm)
+# As we can see, the AIC, BIC and p-value all 3 says that the smaller model is better. Treating year as factor means treating each year as a level for the variable which defeats the whole purpose of this experiment where the motive is to see how the useage of marijuana changes with year, so year should be treated as a numerical variable.
+```
+```{r}
+#Question 2e
+potuse_dat$year = as.numeric(potuse_dat$year)
+library(geepack)
+m.gee = geeglm(used~sex*year, id = id, family = binomial, data = potuse_dat, corstr = 'exchangebale', scale.fix=TRUE) 
+summary(m.gee)
+# This means, according to GEE, the odds of marijuana consumption by boys increases by a factor of almost 1 compared to girls. The overall factor is still close to one but the direction has changed. The coefficient of each specific model means the odds of the response(i.e. used or not) increases/ decreases(dependingon whether +ve/-ve) by that coefficient when the specific variable(whose coefficient is concerned) increases by 1 unit, provided the other variables are fixed. The only difference between GLM and GEE is that GEE forces a correlation structure for within group subjects in the variance.This means GEE is an extension of GLM for repeated measures using Quasi-Likelihood. Over here, the repeated measures of the same subject are expected to be correlated hence the GEE estimates would be more practical compared to GEE.
+```
+```{r}
+#Question 3
+#Question 3a
+library(dplyr)
+toenail$ID = as.factor(toenail$ID)
+toenail_grp = toenail %>% group_by(outcome, treatment, visit) %>%
+summarize(n = n(), .groups = 'drop') %>%
+mutate(proportion = n/sum(n))
+plot(toenail_grp$proportion)
+toenail$followup = 0
+toenail[toenail$visit==1,'followup'] = 0
+toenail[toenail$visit>1,'followup'] = 1
+# people with mild or no outcome have high proportion of visits compared to people with moderate or severe outcome. method (ii) is better for observational study because in the observational study, it would help us to estimate a random intercept for the patient effect because every patient is random in this observational study method (ii) is still better for randomized approach because even if the baseline is not prevelant, we expect all the patients to have a different base effects and may be could have a different growth.
+```
+```{r}
+#Question 3b
+toenail$treatment = as.factor(toenail$treatment)
+toenail$followup = as.factor(toenail$followup)
+m.glmm = glmer(outcome~treatment+month+followup + (1|ID), family = binomial, data = toenail)
+summary(m.glmm)
+# there’s a slight difference at the baseline because the odds of having a moderate or severe outcome increases by exp(0.1035) when the the patient has followup visits compared to when he hasn’t any.
+```
+```{r}
+#Question 3c
+m.gee = geeglm(outcome~treatment+month+followup, id = ID, family = binomial, data = toenail, corstr = 'exchangebale', scale.fix = T)
+summary(m.gee)
+cm = rbind("Trt1 vs Trt2" = c(0, 1, 0, 0))
+esticon(m.glmm, L = cm, beta0 = 0, conf.int = T, level = 0.95)
+esticon(m.gee, L = cm, beta0 = 0, conf.int = T, level = 0.95)
+# estimated effect size between Trt1 and Trt2 is 0.342 with p-value = 0.3 for glm model
+# for gee model The difference might be due to the fact that GLM does not consider correlation within subject and uses exact MLE but GEE does consider correlation within subject and uses quasi likelihood.
+```
+
